@@ -10,16 +10,25 @@ const ProjectsPage = () => {
   const router = useRouter();
 
   // Load data from session/local storage or fetch again
-  useEffect(() => {
+// app/projects/page.jsx ka useEffect check karein:
+
+useEffect(() => {
+  if (typeof window !== 'undefined') {
     const savedData = localStorage.getItem('githubData');
     if (savedData) {
-      const parsed = JSON.parse(savedData);
-      setData(parsed);
-      setFilteredRepos(parsed.repos);
+      try {
+        const parsed = JSON.parse(savedData);
+        setData(parsed);
+        setFilteredRepos(parsed.repos || []);
+      } catch (e) {
+        console.error("Error parsing localStorage data", e);
+        router.push('/');
+      }
     } else {
-      router.push('/'); // Agar data nahi hai toh home par bhejein
+      router.push('/'); 
     }
-  }, []);
+  }
+}, [router]);
 
   // Filter Logic
   useEffect(() => {

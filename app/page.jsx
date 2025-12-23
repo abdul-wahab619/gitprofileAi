@@ -19,6 +19,7 @@ const HomePage = () => {
       const result = await res.json();
       if (res.ok) {
         setData(result);
+        localStorage.setItem('githubData', JSON.stringify(result));
       } else {
         setError(result.error);
       }
