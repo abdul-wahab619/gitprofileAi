@@ -3,13 +3,15 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, User, Briefcase, Folder, Mail } from "lucide-react";
+import { Home, User, CodeXml, Folder, Mail } from "lucide-react";
 
 const navItems = [
   { name: "Home", icon: <Home size={18} />, path: "/" },
   { name: "Projects", icon: <Folder size={18} />, path: "/projects" },
+  {name:"TechStack",icon: <CodeXml size={18}/> , path:"/tech-stack"},
   { name: "About", icon: <User size={18} />, path: "/about" },
   { name: "Contact", icon: <Mail size={18} />, path: "/contact" },
+  
 ];
 
 export default function Navbar() {
