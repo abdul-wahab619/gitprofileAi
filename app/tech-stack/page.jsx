@@ -63,21 +63,21 @@ const entries = Object.entries(normalized).sort(
         Tech Stack Distribution
       </h1>
 
-      <div className="grid md:grid-cols-2 gap-12 items-center">
+      <div className="grid md:grid-cols-1 gap-12 items-center">
         {/* 🥧 PIE */}
-     <div className="w-full max-w-[520px] mx-auto">
+     <div className="w-full max-w-[620px] mx-auto">
   <Pie
     data={chartData}
     options={{
       responsive: true,
       maintainAspectRatio: false,
-      cutout: "65%", // 👈 DONUT STYLE
+      cutout: "55%", // 👈 DONUT STYLE
       plugins: {
         legend: {
           position: "bottom",
           labels: {
             color: "#e5e7eb",
-            boxWidth: 12,
+            boxWidth: 15,
             padding: 14,
             font: {
               size: 13,
