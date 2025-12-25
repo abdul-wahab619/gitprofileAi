@@ -13,6 +13,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import RepoTechCard from "@/app/components/RepoTechCard";
+import { fetchRepoWiseTech } from "@/app/lib/githubTechStack";
 
 ChartJS.register(
   RadialLinearScale,
@@ -32,7 +34,8 @@ const RepoDetailPage = () => {
   const [sections, setSections] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
+  const loadRepoData = async () => {
     const saved = localStorage.getItem("githubData");
     if (!saved) {
       router.push("/");
@@ -40,6 +43,7 @@ const RepoDetailPage = () => {
     }
 
     const parsed = JSON.parse(saved);
+
     const repo = parsed.repos.find(
       (r) => r.name === params.repo
     );
@@ -49,26 +53,51 @@ const RepoDetailPage = () => {
       return;
     }
 
-    setRepoData(repo);
+    // 🔽 CALL API (NOT lib function)
+    const res = await fetch("/api/repo-tech", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: parsed.profile.username,
+      }),
+    });
 
+    const json = await res.json();
+
+    // ✅ SAFE GUARD HERE 👇 (THIS IS THE PART YOU ASKED)
+    const repos = Array.isArray(json.repos) ? json.repos : [];
+
+    const currentRepoTech = repos.find(
+      (r) => r.name === repo.name
+    );
+
+    // ✅ SET FINAL REPO DATA
+    setRepoData({
+      ...repo,
+      tech: currentRepoTech?.tech || [],
+    });
+
+    // ---------- AI CACHE ----------
     const cacheKey = `analysis-${repo.name}`;
     const cached = localStorage.getItem(cacheKey);
 
     if (cached) {
-  const data = JSON.parse(cached);
+      const data = JSON.parse(cached);
+      if (data?.scores && data?.sections?.verdict) {
+        setScores(data.scores);
+        setSections(data.sections);
+        setLoading(false);
+        return;
+      }
+    }
 
-  if (data?.scores && data?.sections?.verdict) {
-    setScores(data.scores);
-    setSections(data.sections);
-    setLoading(false);
-    return;
-  }
-}
+    fetchAI(repo);
+  };
 
-// fallback → force API
-fetchAI(repo);
+  loadRepoData();
+}, [params.repo]);
 
-  }, [params.repo]);
+
 
   const fetchAI = async (repo) => {
     try {
@@ -148,6 +177,13 @@ fetchAI(repo);
             <Badge>🍴 {repoData.forks}</Badge>
           </div>
         </div>
+
+       <RepoTechCard
+  repo={{
+    ...repoData,
+    tech: repoData.tech || [],
+  }}
+/>
 
         {/* SCORE CARDS */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

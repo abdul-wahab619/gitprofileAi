@@ -56,3 +56,47 @@ export async function fetchUserTechStack(username) {
 
   return techTotals;
 }
+
+export async function fetchRepoWiseTech(owner, repo) {
+  try {
+    const headers = {
+      Accept: "application/vnd.github+json",
+    };
+
+    // OPTIONAL but RECOMMENDED (to avoid rate limit)
+    if (process.env.NEXT_PUBLIC_GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${process.env.NEXT_PUBLIC_GITHUB_TOKEN}`;
+    }
+
+    const reposRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}`,
+      { headers }
+    );
+
+    if (!reposRes.ok) {
+      console.log("GitHub API Error:", reposRes.status);
+      return null; // ❗ crash mat hone do
+    }
+
+    const repoData = await reposRes.json();
+
+    // Language API
+    const langRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/languages`,
+      { headers }
+    );
+
+    const languages = langRes.ok ? await langRes.json() : {};
+
+    return {
+      name: repoData.name,
+      description: repoData.description,
+      stars: repoData.stargazers_count,
+      forks: repoData.forks_count,
+      languages: Object.keys(languages),
+    };
+  } catch (error) {
+    console.error("fetchRepoWiseTech error:", error);
+    return null;
+  }
+}
