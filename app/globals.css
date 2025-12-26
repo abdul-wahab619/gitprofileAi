@@ -7,7 +7,7 @@
 ========================= */
 :root {
   /* Base */
-  --background: #f8fafc; /* soft gray-white */
+  --background: #F8FAFC; /* soft gray-white */
   --foreground: #0f172a; /* slate-900 */
 
   /* Surfaces */
@@ -15,8 +15,12 @@
   --card-foreground: #0f172a;
 
   /* Primary (Brand / AI Score) */
-  --primary: #4f46e5; /* indigo-600 */
+  --primary: #2563EB ; /* indigo-600 */
   --primary-foreground: #ffffff;
+
+  /* Text  */
+  --primary-heading: #1E293B;
+  --secondary-heading: #64748B; 
 
   /* Secondary */
   --secondary: #64748b; /* slate-500 */
