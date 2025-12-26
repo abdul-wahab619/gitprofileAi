@@ -26,7 +26,7 @@ export default function Navbar() {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">G</span>
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-800 text-background">
+          <h2 className="text-xl font-bold tracking-tight text-slate-800 ">
             GitProfileAi
           </h2>
         </div>
