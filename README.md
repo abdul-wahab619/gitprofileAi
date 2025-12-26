@@ -64,7 +64,7 @@ npm install
 
 Create a .env.local file:
 
-NEXT_PUBLIC_GITHUB_TOKEN=your_github_token
+GITHUB_TOKEN=your_github_token
 
 
 Using a token helps avoid GitHub API rate limits.
