@@ -201,7 +201,7 @@ const RepoDetailPage = () => {
             {repoData.description || "No description provided"}
           </p>
 
-          <div className="flex gap-3 mt-4 flex-wrap">
+          <div className="flex gap-3 mt-4 mb-3 flex-wrap">
             <Badge>{repoData.language}</Badge>
             <Badge>⭐ {repoData.stars}</Badge>
             <Badge>🍴 {repoData.forks}</Badge>
