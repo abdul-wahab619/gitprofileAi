@@ -20,12 +20,12 @@ export default function Navbar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 border-r border-gray-100 text-slate-900 flex-col p-6 z-50">
+      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-white text-slate-900 flex-col p-6 z-50">
         <div className="flex items-center gap-2 mb-10 px-4">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">G</span>
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-800 text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-slate-800 text-background">
             GitProfileAi
           </h2>
         </div>
