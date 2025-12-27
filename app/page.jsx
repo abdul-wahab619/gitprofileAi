@@ -24,6 +24,15 @@ const HomePage = () => {
     }
   }, []);
 
+  /* 🔍 Check URL for username param */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userParam = params.get('user');
+    if (userParam) {
+      fetchGithubData(userParam);
+    }
+  }, []);
+
   /* 🧠 AI PROFILE ANALYSIS */
   const fetchProfileAnalysis = async (githubData) => {
     setAiLoading(true);
