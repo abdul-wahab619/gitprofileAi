@@ -114,7 +114,7 @@ const HomePage = () => {
               <SearchBar
                 onSearch={(username) => {
                   fetchGithubData(username);
-                  window.history.pushState({}, '', `/${username}`);
+                  window.history.pushState({}, '', `?user=${username}`);
                 }}
               />
             </div>
