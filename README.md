@@ -1,11 +1,9 @@
-🌟 GitProfile AI
+# 🚀 GitProfile AI — Instantly Understand Any GitHub Repo or Profile
 
-An AI-powered GitHub profile & repository analyzer that provides tech stack insights, commit activity, and contribution analysis.
+Analyze GitHub repositories & profiles in seconds with AI-powered insights — **tech stack breakdown, commit activity, contribution trends, and project quality at a glance**.
 
-🚀 About the Project
-
-GitProfile AI helps developers analyze GitHub repositories in a clean and visual way.
-It fetches repository details, detects the tech stack, analyzes commits, and provides insights to understand project quality and activity.
+⭐ If you find this useful, please **star the repo** — it helps us grow 👇  
+⭐ **Star this repo → https://github.com/shreyashpatel5506/gitprofileAi**
 
 This project is useful for:
 
@@ -67,15 +65,15 @@ Create a .env.local file:
 ```env
 # Example placeholder (do not use real token here)
 GITHUB_TOKEN=your_github_token_here
-
+```
 
 ⚠️ Do NOT commit your actual token to GitHub.
-
 Using a token helps avoid GitHub API rate limits.
 
 4️⃣ Run the project
+```
 npm run dev
-
+```
 
 Open http://localhost:3000
  in your browser.
