@@ -75,7 +75,7 @@ Using a token helps avoid GitHub API rate limits.
 npm run dev
 ```
 
-Open http://localhost:3000
+Open ```http://localhost:3000```
  in your browser.
 
 🤝 Contributing
