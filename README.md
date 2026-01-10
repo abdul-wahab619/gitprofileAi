@@ -90,7 +90,7 @@ Fork the repository
 
 Create a new branch
 
-git checkout -b feature-name
+```git checkout -b feature-name```
 
 
 Make your changes
