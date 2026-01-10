@@ -132,4 +132,4 @@ MIT License. See `LICENSE` for details.
 
 **Shreyash Patel**
 - GitHub: [@shreyashpatel5506](https://github.com/shreyashpatel5506)
-- Discord: [Community Server](https://discord.com/channels/1454057654577139804/1454057983762759774)
+- Discord: [Community Server](https://discord.gg/YOUR_INVITE_CODE)
