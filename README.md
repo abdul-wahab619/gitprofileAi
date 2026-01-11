@@ -1,4 +1,4 @@
-# GitProfile AI
+# githubanalyzer
 
 Automated GitHub profile and repository analysis for developers, recruiters, and open-source contributors.
 
@@ -6,7 +6,7 @@ Automated GitHub profile and repository analysis for developers, recruiters, and
 
 ## Overview
 
-GitProfile AI analyzes GitHub profiles and repositories to extract technology stacks, contribution patterns, and repository insights. Built for developers who need to quickly evaluate codebases and profiles without manual review.
+githubanalyzer analyzes GitHub profiles and repositories to extract technology stacks, contribution patterns, and repository insights. Built for developers who need to quickly evaluate codebases and profiles without manual review.
 
 **Key capabilities:**
 - Repository-level technology stack detection
