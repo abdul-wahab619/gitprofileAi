@@ -13,29 +13,25 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import {
-  ArrowLeft,
-  Star,
-  GitFork,
-  ExternalLink,
-  Calendar,
-  Code,
-  AlertTriangle,
-  TrendingUp,
-  CheckCircle,
-  Loader2,
-  Activity,
-} from "lucide-react";
+
+import Layout from "@/app/components/Layout";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "../../../../components/Card";
+
 import RepoTechCard from "../../../../components/RepoTechCard";
 import RepoCommitAnalytics from "../../../../components/RepoCommitAnalytics";
-import Layout from "@/app/components/Layout";
 
+import {
+  ArrowLeft,
+  Code,
+  TrendingUp,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 ChartJS.register(
   RadialLinearScale,
@@ -57,7 +53,7 @@ export default function RepoDetailPage() {
   const [loading, setLoading] = useState(true);
 
   // -------------------------------
-  // Fetch commits
+  // Commits
   // -------------------------------
   const fetchCommits = async (repoName, username) => {
     try {
@@ -80,7 +76,7 @@ export default function RepoDetailPage() {
   };
 
   // -------------------------------
-  // Fetch AI
+  // AI
   // -------------------------------
   const fetchAI = async (repoDetails) => {
     try {
@@ -90,16 +86,10 @@ export default function RepoDetailPage() {
         body: JSON.stringify({ repoDetails }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err?.error || "AI failed");
-      }
+      if (!res.ok) throw new Error("AI failed");
 
       const data = await res.json();
-
-      if (!data?.scores) {
-        throw new Error("Invalid AI response");
-      }
+      if (!data?.scores) throw new Error("Invalid AI response");
 
       setScores(data.scores);
       setSections(data.sections);
@@ -108,15 +98,18 @@ export default function RepoDetailPage() {
         `analysis-${repoDetails.name}`,
         JSON.stringify(data)
       );
-    } catch (err) {
-      console.error("AI ERROR:", err.message);
+    } catch {
+      setSections({
+        verdict:
+          "AI analysis is temporarily unavailable due to rate limits. Showing repository data only.",
+      });
     } finally {
-      setLoading(false); // 🔥 SPINNER KILL SWITCH
+      setLoading(false);
     }
   };
 
   // -------------------------------
-  // Main loader
+  // INIT
   // -------------------------------
   useEffect(() => {
     const init = async () => {
@@ -125,16 +118,11 @@ export default function RepoDetailPage() {
         if (!saved) return router.push("/");
 
         const parsed = JSON.parse(saved);
-        const repoDetails = parsed.repos?.find(
-          (r) => r.name === repo
-        );
-
+        const repoDetails = parsed.repos?.find((r) => r.name === repo);
         if (!repoDetails) return router.push("/projects");
 
-        setRepoData(repoDetails);
         fetchCommits(repoDetails.name, parsed.profile.username);
 
-        // Tech stack
         const techRes = await fetch(`/api/repo-tech/${repoDetails.name}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -142,28 +130,23 @@ export default function RepoDetailPage() {
         });
 
         const techJson = await techRes.json();
-        setRepoData((prev) => ({
-          ...prev,
+        setRepoData({
+          ...repoDetails,
           tech: Array.isArray(techJson?.tech) ? techJson.tech : [],
-        }));
+        });
 
-        // Cache check
         const cacheKey = `analysis-${repoDetails.name}`;
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
           const data = JSON.parse(cached);
-          if (data?.scores) {
-            setScores(data.scores);
-            setSections(data.sections);
-            setLoading(false);
-            return;
-          }
+          setScores(data.scores);
+          setSections(data.sections);
+          setLoading(false);
+          return;
         }
 
-        // Run AI
         fetchAI(repoDetails);
-      } catch (err) {
-        console.error(err);
+      } catch {
         setLoading(false);
       }
     };
@@ -172,9 +155,9 @@ export default function RepoDetailPage() {
   }, [repo, router]);
 
   // -------------------------------
-  // Loading UI
+  // Loading
   // -------------------------------
-  if (loading || !repoData) {
+  if (loading && !repoData) {
     return (
       <Layout>
         <div className="flex justify-center items-center min-h-[60vh]">
@@ -185,19 +168,24 @@ export default function RepoDetailPage() {
   }
 
   // -------------------------------
-  // Chart
+  // Scores
   // -------------------------------
-  const chartData = scores && {
-    labels: Object.keys(scores),
-    datasets: [
-      {
-        data: Object.values(scores),
-        fill: true,
-        backgroundColor: "rgba(16,185,129,0.15)",
-        borderColor: "#10b981",
-      },
-    ],
-  };
+  const scoreEntries = scores ? Object.entries(scores) : [];
+
+  const RadarData =
+    scores && {
+      labels: scoreEntries.map(([k]) =>
+        k.replace(/([A-Z])/g, " $1").trim()
+      ),
+      datasets: [
+        {
+          data: scoreEntries.map(([, v]) => v),
+          fill: true,
+          backgroundColor: "rgba(16,185,129,0.15)",
+          borderColor: "#10b981",
+        },
+      ],
+    };
 
   return (
     <Layout>
@@ -221,8 +209,24 @@ export default function RepoDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Radar */}
+        {/* Score Grid */}
         {scores && (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {scoreEntries.map(([k, v]) => (
+              <Card key={k}>
+                <CardContent className="p-6 text-center">
+                  <div className="text-2xl font-bold">{v}/10</div>
+                  <div className="text-sm capitalize text-gray-500">
+                    {k.replace(/([A-Z])/g, " $1")}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Radar */}
+        {RadarData && (
           <Card>
             <CardHeader>
               <CardTitle className="flex gap-2">
@@ -230,7 +234,7 @@ export default function RepoDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="h-80">
-              <Radar data={chartData} />
+              <Radar data={RadarData} />
             </CardContent>
           </Card>
         )}
@@ -239,11 +243,55 @@ export default function RepoDetailPage() {
         {sections?.verdict && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex gap-2">
-                <CheckCircle /> Verdict
-              </CardTitle>
+              <CardTitle>Overall Verdict</CardTitle>
             </CardHeader>
             <CardContent>{sections.verdict}</CardContent>
+          </Card>
+        )}
+
+        {/* Areas for Improvement */}
+        {sections?.areasForImprovement?.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Areas for Improvement</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {sections.areasForImprovement.map((item, i) => (
+                <div key={i}>
+                  <h4 className="font-semibold">{item.title}</h4>
+                  <p className="text-gray-600">{item.description}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 48 Hour Plan */}
+        {sections?.fixPlan48h?.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>48-Hour Fix Plan</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {sections.fixPlan48h.map((step, i) => (
+                <div key={i}>
+                  <span className="font-semibold text-emerald-600">
+                    {step.time}:
+                  </span>{" "}
+                  {step.task}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Career Impact */}
+        {sections?.careerImpact && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Career Impact Advice</CardTitle>
+            </CardHeader>
+            <CardContent>{sections.careerImpact}</CardContent>
           </Card>
         )}
 

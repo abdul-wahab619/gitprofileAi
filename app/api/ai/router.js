@@ -5,7 +5,7 @@ export async function runAI(prompt) {
   const openaiKeys = process.env.OPENAI_KEYS?.split(",") || [];
   let lastError = null;
 
-  // 🔁 OpenAI key rotation ONLY
+  // 🔁 STRICT OpenAI rotation
   for (const key of openaiKeys) {
     try {
       return await callOpenAI(prompt, key.trim());
@@ -15,18 +15,19 @@ export async function runAI(prompt) {
     }
   }
 
-  // 🚫 Gemini is NOT default fallback
+  // 🚫 Gemini HARD-GATED
   if (process.env.ENABLE_GEMINI === "true") {
+    console.warn("⚠️ OpenAI exhausted. Gemini explicitly enabled.");
+
     try {
-      console.warn("All OpenAI keys exhausted. Trying Gemini...");
       return await callGemini(prompt);
     } catch (err) {
-      throw new Error(`All providers failed. Gemini error: ${err.message}`);
+      throw new Error(`Gemini failed: ${err.message}`);
     }
   }
 
-  // ❌ Final hard failure
+  // ❌ HARD FAIL (EXPECTED BEHAVIOR)
   throw new Error(
-    `All OpenAI keys failed. Gemini disabled. Last error: ${lastError?.message}`
+    `All OpenAI keys exhausted. Gemini disabled. Last error: ${lastError?.message}`
   );
 }

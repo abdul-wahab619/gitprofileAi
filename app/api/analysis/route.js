@@ -1,16 +1,45 @@
 import { NextResponse } from "next/server";
 import { runAI } from "../ai/router";
 
+// ---------- helpers ----------
 function getSection(text, title) {
   const regex = new RegExp(`## ${title}[\\s\\S]*?(?=##|$)`, "i");
   const match = text.match(regex);
   return match ? match[0].replace(`## ${title}`, "").trim() : "";
 }
 
+function parseBullets(text) {
+  if (!text) return [];
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const m = line.match(/\*\*(.+?)\*\*:?\s*(.*)/);
+      return m
+        ? { title: m[1], description: m[2] }
+        : { title: "Note", description: line };
+    });
+}
+
+function parseFixPlan(text) {
+  if (!text) return [];
+  return text
+    .split("\n")
+    .filter((l) => /^\d+\./.test(l))
+    .map((step) => {
+      const time = step.match(/\((.*?)\)/)?.[1] || "Phase";
+      return {
+        time,
+        task: step.replace(/^\d+\.\s*/, ""),
+      };
+    });
+}
+
+// ---------- API ----------
 export async function POST(req) {
   try {
     const { repoDetails } = await req.json();
-
     if (!repoDetails) {
       return NextResponse.json(
         { error: "Repo details missing" },
@@ -54,9 +83,8 @@ Code Quality:
 
     const analysis = await runAI(prompt);
 
-    // 🔢 Extract numbers safely
+    // -------- scores --------
     const nums = analysis.match(/\b(10|[0-9])\b/g)?.map(Number) || [];
-
     const scores = {
       maintainability: nums[0] ?? 0,
       security: nums[1] ?? 0,
@@ -65,17 +93,24 @@ Code Quality:
       codeQuality: nums[4] ?? 0,
     };
 
+    // -------- sections --------
+    const verdict = getSection(analysis, "Overall Verdict");
+    const missingRaw = getSection(analysis, "What Is MISSING");
+    const fixPlanRaw = getSection(analysis, "48-Hour Fix Plan");
+    const career = getSection(analysis, "Career Impact Advice");
+
     const sections = {
-      verdict: getSection(analysis, "Overall Verdict"),
-      missing: getSection(analysis, "What Is MISSING"),
-      fixPlan: getSection(analysis, "48-Hour Fix Plan"),
-      career: getSection(analysis, "Career Impact Advice"),
+      verdict,
+      overallAssessment: verdict,
+      areasForImprovement: parseBullets(missingRaw),
+      fixPlan48h: parseFixPlan(fixPlanRaw),
+      careerImpact: career,
     };
 
     return NextResponse.json({
       scores,
       sections,
-      rawAnalysis: analysis,
+      rawAnalysis: analysis, // debug only
     });
   } catch (error) {
     console.error("AI ERROR:", error);
