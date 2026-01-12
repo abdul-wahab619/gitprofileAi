@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "./Card";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check, ExternalLink ,Twitter,Linkedin} from "lucide-react";
 
 export default function ShareModal({ isOpen, onClose, profileUrl, username }) {
   const [copiedStates, setCopiedStates] = useState({});
@@ -10,63 +10,40 @@ export default function ShareModal({ isOpen, onClose, profileUrl, username }) {
   const copyToClipboard = async (text, key) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedStates(prev => ({ ...prev, [key]: true }));
+      setCopiedStates((prev) => ({ ...prev, [key]: true }));
       setTimeout(() => {
-        setCopiedStates(prev => ({ ...prev, [key]: false }));
+        setCopiedStates((prev) => ({ ...prev, [key]: false }));
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
 
-  const shareOptions = [
-    {
-      key: 'profile',
-      label: 'Copy Profile Link',
-      description: 'Share the direct link to this analysis',
-      url: profileUrl,
-      icon: Copy,
-      color: 'text-gray-600'
-    },
-    {
-      key: 'linkedin',
-      label: 'Share on LinkedIn',
-      description: 'Post to your LinkedIn network',
-      url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`,
-      icon: ExternalLink,
-      color: 'text-blue-600',
-      external: true
-    },
-    {
-      key: 'twitter',
-      label: 'Share on X (Twitter)',
-      description: 'Tweet about this profile analysis',
-      url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this GitHub profile analysis for @${username}`)}&url=${encodeURIComponent(profileUrl)}`,
-      icon: ExternalLink,
-      color: 'text-gray-900',
-      external: true
-    }
-  ];
-
-  const handleShare = (option) => {
-    if (option.external) {
-      window.open(option.url, '_blank', 'noopener,noreferrer');
-    } else {
-      copyToClipboard(option.url, option.key);
-    }
+  const handleExternalShare = (url) => {
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   if (!isOpen) return null;
 
+  const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+    profileUrl
+  )}`;
+
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+    `Check out this GitHub profile analysis for @${username}`
+  )}&url=${encodeURIComponent(profileUrl)}`;
+
   return (
     <>
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 z-40"
         onClick={onClose}
       />
+
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md z-50">
         <Card>
           <CardContent className="p-6">
+            {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Share Profile Analysis
@@ -79,59 +56,92 @@ export default function ShareModal({ isOpen, onClose, profileUrl, username }) {
                 ✕
               </button>
             </div>
-            
+
             <div className="space-y-3">
-              {shareOptions.map((option) => {
-                const Icon = option.icon;
-                const isCopied = copiedStates[option.key];
-                
-                return (
-                  <button
-                    key={option.key}
-                    onClick={() => handleShare(option)}
-                    className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 
-                             dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 
-                             transition-colors group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-700 ${option.color}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900 dark:text-white">
-                          {option.label}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {option.description}
-                        </div>
-                      </div>
+              {/* Copy Profile Link */}
+              <button
+                onClick={() => copyToClipboard(profileUrl, "profile")}
+                className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 
+                           dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600">
+                    <Copy className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Copy Profile Link
                     </div>
-                    
-                    {!option.external && (
-                      <div className="flex items-center">
-                        {isCopied ? (
-                          <div className="flex items-center space-x-1 text-emerald-600">
-                            <Check className="w-4 h-4" />
-                            <span className="text-sm font-medium">Copied!</span>
-                          </div>
-                        ) : (
-                          <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
-                            <Copy className="w-4 h-4" />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {option.external && (
-                      <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
-                        <ExternalLink className="w-4 h-4" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Share the direct link to this analysis
+                    </div>
+                  </div>
+                </div>
+
+                {copiedStates.profile ? (
+                  <div className="flex items-center space-x-1 text-emerald-600">
+                    <Check className="w-4 h-4" />
+                    <span className="text-sm font-medium">Copied!</span>
+                  </div>
+                ) : (
+                  <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
+                    <Copy className="w-4 h-4" />
+                  </div>
+                )}
+              </button>
+
+              {/* LinkedIn */}
+              <button
+                onClick={() => handleExternalShare(linkedinUrl)}
+                className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 
+                           dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-blue-600">
+                    <Linkedin className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Share on LinkedIn
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Post to your LinkedIn network
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
+                  <ExternalLink className="w-4 h-4" />
+                </div>
+              </button>
+
+              {/* Twitter */}
+              <button
+                onClick={() => handleExternalShare(twitterUrl)}
+                className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 
+                           dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900">
+                    <Twitter className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Share on X (Twitter)
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Tweet about this profile analysis
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
+                  <ExternalLink className="w-4 h-4" />
+                </div>
+              </button>
             </div>
-            
+
+            {/* URL Box */}
             <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                 Profile URL
@@ -142,16 +152,19 @@ export default function ShareModal({ isOpen, onClose, profileUrl, username }) {
                   readOnly
                   value={profileUrl}
                   className="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-200 
-                           dark:border-gray-600 rounded-lg text-gray-900 dark:text-white 
-                           focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                           dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
                   onFocus={(e) => e.target.select()}
                 />
                 <button
-                  onClick={() => copyToClipboard(profileUrl, 'url')}
+                  onClick={() => copyToClipboard(profileUrl, "url")}
                   className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 
                            hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                 >
-                  {copiedStates.url ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  {copiedStates.url ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
