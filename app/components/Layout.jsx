@@ -159,30 +159,61 @@ export default function Layout({ children }) {
 
       {/* Footer - Fixed at bottom when content is short */}
       <footer className="mt-auto bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="flex items-center justify-center w-6 h-6 bg-emerald-600 rounded-md">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                GitProfile AI - Powered by OpenAI
-              </span>
-            </div>
-            <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
-              <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">
-                Privacy
-              </a>
-              <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">
-                Terms
-              </a>
-              <a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">
-                Support
-              </a>
-            </div>
-          </div>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+      
+      {/* Left */}
+      <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-center w-6 h-6 bg-emerald-600 rounded-md">
+          <Sparkles className="w-4 h-4 text-white" />
         </div>
-      </footer>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Built by{" "}
+          <a
+            href="https://www.linkedin.com/in/shreyash-patel-ba27b02a6/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            Shreyash Patel
+          </a>
+        </span>
+      </div>
+
+      {/* Right */}
+      <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
+        <a
+          href="https://github.com/shreyashpatel5506/gitprofileAi"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-gray-900 dark:hover:text-white transition-colors"
+        >
+          Open Source
+        </a>
+
+        <a
+          href="https://github.com/shreyashpatel5506/gitprofileAi/graphs/contributors"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-gray-900 dark:hover:text-white transition-colors"
+        >
+          Contributors
+        </a>
+
+        <a
+          href="https://www.linkedin.com/in/shreyash-patel-ba27b02a6/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-gray-900 dark:hover:text-white transition-colors font-medium"
+        >
+          LinkedIn
+        </a>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
     </div>
   );
 }

@@ -9,7 +9,7 @@ export default function RightProfileSidebar() {
 
   // ✅ NEW: state for copy success
   const [copied, setCopied] = useState(false);
-
+  
   /* 🔁 Load profile from localStorage */
 useEffect(() => {
   const loadProfile = () => {
