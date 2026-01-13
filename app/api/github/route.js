@@ -63,18 +63,17 @@ async function handleGitHubResponse(res, context) {
   return { error: false, data };
 }
 
-/* ================== GRAPHQL ================== */
+/* ================== GRAPHQL (AUTH ONLY) ================== */
 
 async function fetchExactContributions(username, headers) {
   const fromDate = new Date(
     Date.now() - 90 * 24 * 60 * 60 * 1000
   ).toISOString();
-  const toDate = new Date().toISOString();
 
   const query = `
     query ($login: String!) {
       user(login: $login) {
-        contributionsCollection(from: "${fromDate}", to: "${toDate}") {
+        contributionsCollection(from: "${fromDate}") {
           totalCommitContributions
           totalPullRequestContributions
           totalIssueContributions
@@ -95,12 +94,7 @@ async function fetchExactContributions(username, headers) {
 
     const json = await res.json();
 
-    if (
-      json.errors ||
-      !json.data ||
-      !json.data.user ||
-      !json.data.user.contributionsCollection
-    ) {
+    if (json.errors || !json?.data?.user?.contributionsCollection) {
       return null;
     }
 
@@ -134,6 +128,70 @@ async function fetchAllRepos({ username, headers }) {
   return repos.slice(0, MAX_REPOS_TO_FETCH);
 }
 
+/* ================== GUEST MODE ESTIMATES ================== */
+
+async function estimateCommits(username, repos) {
+  let commits = 0;
+
+  for (const repo of repos.slice(0, 10)) {
+    const res = await fetch(
+      `${GITHUB_API}/repos/${username}/${repo.name}/commits?author=${username}&per_page=1`,
+      { headers: publicHeaders }
+    );
+
+    if (!res.ok) continue;
+
+    const link = res.headers.get("link");
+    if (link?.includes('rel="last"')) {
+      const match = link.match(/page=(\d+)>; rel="last"/);
+      if (match) commits += parseInt(match[1], 10);
+    } else {
+      const data = await res.json();
+      commits += data.length;
+    }
+  }
+
+  return commits;
+}
+
+async function estimatePRBreakdown(username, repos) {
+  let open = 0;
+  let merged = 0;
+
+  for (const repo of repos.slice(0, 10)) {
+    const openRes = await fetch(
+      `${GITHUB_API}/repos/${username}/${repo.name}/pulls?state=open&per_page=1`,
+      { headers: publicHeaders }
+    );
+
+    if (openRes.ok) {
+      const link = openRes.headers.get("link");
+      if (link?.includes('rel="last"')) {
+        const match = link.match(/page=(\d+)>; rel="last"/);
+        if (match) open += parseInt(match[1], 10);
+      }
+    }
+
+    const closedRes = await fetch(
+      `${GITHUB_API}/repos/${username}/${repo.name}/pulls?state=closed&per_page=30`,
+      { headers: publicHeaders }
+    );
+
+    if (closedRes.ok) {
+      const pulls = await closedRes.json();
+      for (const pr of pulls) {
+        if (pr.merged_at) merged++;
+      }
+    }
+  }
+
+  return {
+    total: open + merged,
+    open,
+    merged,
+  };
+}
+
 /* ================== NORMALIZERS ================== */
 
 const ACTIVE_DAYS_THRESHOLD = 90;
@@ -141,7 +199,7 @@ const ACTIVE_DAYS_THRESHOLD = 90;
 function isRepoActive(repo) {
   if (repo.archived || repo.disabled) return false;
   const lastPush = new Date(repo.pushed_at).getTime();
-  const cutoff = Date.now() - ACTIVE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - ACTIVE_DAYS_THRESHOLD * 86400000;
   return lastPush >= cutoff;
 }
 
@@ -168,17 +226,10 @@ function normalizeRepos(repos) {
       name: r.name,
       description: r.description,
       stars: r.stargazers_count,
-      watchers: r.watchers_count,
       forks: r.forks_count,
       language: r.language,
       topics: r.topics || [],
-      homepage: r.homepage || null,
-      license: r.license?.name || null,
-      openIssues: r.open_issues_count,
-      defaultBranch: r.default_branch,
       archived: r.archived,
-      disabled: r.disabled,
-      size: r.size,
       pushedAt: r.pushed_at,
       updatedAt: r.updated_at,
       isActive: isRepoActive(r),
@@ -198,7 +249,7 @@ export async function POST(req) {
 
     const cleanUsername = validation.username;
 
-    // ✅ PUBLIC PROFILE (NO AUTH)
+    // ✅ PROFILE (PUBLIC)
     const profileRes = await fetch(`${GITHUB_API}/users/${cleanUsername}`, {
       headers: publicHeaders,
     });
@@ -215,62 +266,74 @@ export async function POST(req) {
       );
     }
 
-    // ✅ PUBLIC REPOS
     const repos = await fetchAllRepos({
       username: cleanUsername,
       headers: publicHeaders,
     });
 
-    // ✅ OPTIONAL / AUTH FEATURES
     const authHeaders = getAuthHeaders(accessToken);
 
-    const [totalPRRes, mergedPRRes, openPRRes, graphStatsRaw] =
-      await Promise.all([
-        fetch(
-          `${GITHUB_API}/search/issues?q=author:${cleanUsername}+type:pr&per_page=1`,
-          { headers: authHeaders }
-        ),
-        fetch(
-          `${GITHUB_API}/search/issues?q=author:${cleanUsername}+type:pr+is:merged&per_page=1`,
-          { headers: authHeaders }
-        ),
-        fetch(
-          `${GITHUB_API}/search/issues?q=author:${cleanUsername}+type:pr+is:open&per_page=1`,
-          { headers: authHeaders }
-        ),
-        fetchExactContributions(cleanUsername, authHeaders),
-      ]);
+    let totalPR = 0;
+    let openPR = 0;
+    let mergedPR = 0;
+    let graphStats;
 
-    const totalPR = totalPRRes.ok ? (await totalPRRes.json()).total_count : 0;
-    const mergedPR = mergedPRRes.ok
-      ? (await mergedPRRes.json()).total_count
-      : 0;
-    const openPR = openPRRes.ok ? (await openPRRes.json()).total_count : 0;
+    if (accessToken) {
+      const [totalPRRes, mergedPRRes, openPRRes, graphStatsRaw] =
+        await Promise.all([
+          fetch(
+            `${GITHUB_API}/search/issues?q=author:${cleanUsername}+type:pr&per_page=1`,
+            { headers: authHeaders }
+          ),
+          fetch(
+            `${GITHUB_API}/search/issues?q=author:${cleanUsername}+type:pr+is:merged&per_page=1`,
+            { headers: authHeaders }
+          ),
+          fetch(
+            `${GITHUB_API}/search/issues?q=author:${cleanUsername}+type:pr+is:open&per_page=1`,
+            { headers: authHeaders }
+          ),
+          fetchExactContributions(cleanUsername, authHeaders),
+        ]);
 
-    const graphStats = graphStatsRaw ?? {
-      totalCommitContributions: 0,
-      totalPullRequestContributions: 0,
-      totalIssueContributions: 0,
-    };
+      totalPR = totalPRRes.ok ? (await totalPRRes.json()).total_count : 0;
+      mergedPR = mergedPRRes.ok ? (await mergedPRRes.json()).total_count : 0;
+      openPR = openPRRes.ok ? (await openPRRes.json()).total_count : 0;
+
+      graphStats = graphStatsRaw ?? {
+        totalCommitContributions: 0,
+        totalPullRequestContributions: 0,
+        totalIssueContributions: 0,
+      };
+    } else {
+      const prEstimate = await estimatePRBreakdown(cleanUsername, repos);
+      const commitEstimate = await estimateCommits(cleanUsername, repos);
+
+      totalPR = prEstimate.total;
+      openPR = prEstimate.open;
+      mergedPR = prEstimate.merged;
+
+      graphStats = {
+        totalCommitContributions: commitEstimate,
+        totalPullRequestContributions: totalPR,
+        totalIssueContributions: 0,
+      };
+    }
 
     return NextResponse.json({
       profile: normalizeProfile(profileResult.data),
       repos: normalizeRepos(repos),
       pullRequests: {
         total: totalPR,
-        merged: mergedPR,
         open: openPR,
-        closed: Math.max(0, totalPR - mergedPR - openPR),
+        merged: mergedPR,
+        closed: Math.max(0, totalPR - openPR - mergedPR),
       },
       recentActivity: {
         commits: graphStats.totalCommitContributions,
         pullRequests: graphStats.totalPullRequestContributions,
         issues: graphStats.totalIssueContributions,
-        activeRepositories: repos.filter(
-          (r) =>
-            new Date(r.pushed_at) >
-            new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-        ).length,
+        activeRepositories: repos.filter((r) => r.isActive).length,
       },
       authMode: accessToken ? "authenticated" : "guest",
     });
