@@ -9,7 +9,6 @@ const MAX_REPOS_TO_FETCH = 100;
 
 /* ================== HEADERS ================== */
 
-// ✅ PUBLIC (NO AUTH — NEVER FAILS)
 const publicHeaders = {
   Accept: "application/vnd.github+json",
   "X-GitHub-Api-Version": GITHUB_API_VERSION,
@@ -270,7 +269,7 @@ export async function POST(req) {
       username: cleanUsername,
       headers: publicHeaders,
     });
-
+    const normalizedRepos = normalizeRepos(repos);
     const authHeaders = getAuthHeaders(accessToken);
 
     let totalPR = 0;
@@ -333,7 +332,7 @@ export async function POST(req) {
         commits: graphStats.totalCommitContributions,
         pullRequests: graphStats.totalPullRequestContributions,
         issues: graphStats.totalIssueContributions,
-        activeRepositories: repos.filter((r) => r.isActive).length,
+        activeRepositories: normalizedRepos.filter((r) => r.isActive).length,
       },
       authMode: accessToken ? "authenticated" : "guest",
     });
